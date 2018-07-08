@@ -117,47 +117,40 @@ void pushCatalog(String tag) {
   // Get device ID and current logged user
   String deviceId = Firebase.getString("device/ESP_590AC5/id");
   String email = Firebase.getString("device/ESP_590AC5/currentUser");
-  String user = email.substring(0, email.indexOf('@'));
+  
+  if (email != "none") {
+    String user = email.substring(0, email.indexOf('@'));
     
-  String catalog = "data/" + user + "/" + deviceId + "/catalog/" + tag;
-
-  String lastReadDay = localDateAndTime().substring(0, 3);
-  String lastReadDate = localDateAndTime().substring(5, 14);
-  String lastReadTime = localDateAndTime().substring(15, 23);
-
-  // If no tag data beforehand
-  if (Firebase.getString(catalog + "/id") != tag) {
-    // Set initials values
-    Firebase.setString(catalog + "/id", tag);
-    Firebase.setString(catalog + "/name", "(no-name)");
-    Firebase.setString(catalog + "/lastReadDate", lastReadDate);
-    Firebase.setString(catalog + "/lastReadTime", lastReadTime);
-    Firebase.setString(catalog + "/status", "in");
-
-    // Set for schedule
-//    Firebase.setBool(catalog + "/schedule/Sun", false);
-//    Firebase.setBool(catalog + "/schedule/Mon", false);
-//    Firebase.setBool(catalog + "/schedule/Tue", false);
-//    Firebase.setBool(catalog + "/schedule/Wed", false);
-//    Firebase.setBool(catalog + "/schedule/Thu", false);
-//    Firebase.setBool(catalog + "/schedule/Fri", false);
-//    Firebase.setBool(catalog + "/schedule/Sat", false);
+    String catalog = "data/" + user + "/" + deviceId + "/catalog/" + tag;
     
-  } else {
-    // Update values
-    Firebase.setString(catalog + "/lastReadDate", lastReadDate);
-    Firebase.setString(catalog + "/lastReadTime", lastReadTime);
-    // Switch status
-    if (Firebase.getString(catalog + "/status") == "in") {
-      Firebase.setString(catalog + "/status", "out");
-    } else if (Firebase.getString(catalog + "/status") == "out") {
+    String lastReadDay = localDateAndTime().substring(0, 3);
+    String lastReadDate = localDateAndTime().substring(5, 14);
+    String lastReadTime = localDateAndTime().substring(15, 23);
+    
+    // If no tag data beforehand
+    if (Firebase.getString(catalog + "/id") != tag) {
+      // Set initials values
+      Firebase.setString(catalog + "/id", tag);
+      Firebase.setString(catalog + "/name", "(no-name)");
+      Firebase.setString(catalog + "/lastReadDate", lastReadDate);
+      Firebase.setString(catalog + "/lastReadTime", lastReadTime);
       Firebase.setString(catalog + "/status", "in");
+    } else {
+      // Update values
+      Firebase.setString(catalog + "/lastReadDate", lastReadDate);
+      Firebase.setString(catalog + "/lastReadTime", lastReadTime);
+      // Switch status
+      if (Firebase.getString(catalog + "/status") == "in") {
+        Firebase.setString(catalog + "/status", "out");
+      } else if (Firebase.getString(catalog + "/status") == "out") {
+        Firebase.setString(catalog + "/status", "in");
+      }
     }
-  }
-
-  // Handle error
-  if (Firebase.failed()) {
-    return;
+    
+    // Handle error
+    if (Firebase.failed()) {
+      return;
+    }
   }
 }
 
@@ -167,35 +160,34 @@ void pushHistory(String tag) {
   // Get device ID and current logged user
   String deviceId = Firebase.getString("device/ESP_590AC5/id");
   String email = Firebase.getString("device/ESP_590AC5/currentUser");
-  String user = email.substring(0, email.indexOf('@'));
-
-  String history = "data/" + user + "/" + deviceId + "/history/";
-  String catalog = "data/" + user + "/" + deviceId + "/catalog/" + tag;
-
-  // Get values from catalog
-//  String tagId = Firebase.getString(catalog + "/id");
-//  String tagName = Firebase.getString(catalog + "/name");
-  String tagDate = Firebase.getString(catalog + "/lastReadDate");
-  String tagTime = Firebase.getString(catalog + "/lastReadTime");
-  String tagStatus = Firebase.getString(catalog + "/status");
-
-  // Create a Json object for logs message
-  StaticJsonBuffer<200> jsonBuffer;
-  JsonObject& newHistory = jsonBuffer.createObject();
-//  newHistory["id"] = tagId;
-//  newHistory["name"] = tagName;
-  newHistory["date"] = tagDate;
-  newHistory["time"] = tagTime;
-  newHistory["status"] = tagStatus;
-
-  JsonObject& reference = newHistory.createNestedObject("reference");
-  reference[tag] = true;
   
-  // Append the value to /HISTORY/
-  Firebase.push(history, newHistory);
+  if (email != "none") {
+    String user = email.substring(0, email.indexOf('@'));
 
-  // Handle error
-  if (Firebase.failed()) {
-    return;
-  }
+    String history = "data/" + user + "/" + deviceId + "/history/";
+    String catalog = "data/" + user + "/" + deviceId + "/catalog/" + tag;
+  
+    // Get values from catalog
+    String tagDate = Firebase.getString(catalog + "/lastReadDate");
+    String tagTime = Firebase.getString(catalog + "/lastReadTime");
+    String tagStatus = Firebase.getString(catalog + "/status");
+  
+    // Create a Json object for logs message
+    StaticJsonBuffer<200> jsonBuffer;
+    JsonObject& newHistory = jsonBuffer.createObject();
+    newHistory["date"] = tagDate;
+    newHistory["time"] = tagTime;
+    newHistory["status"] = tagStatus;
+  
+    JsonObject& reference = newHistory.createNestedObject("reference");
+    reference[tag] = true;
+    
+    // Append the value to /HISTORY/
+    Firebase.push(history, newHistory);
+  
+    // Handle error
+    if (Firebase.failed()) {
+      return;
+    }
+  } 
 }
